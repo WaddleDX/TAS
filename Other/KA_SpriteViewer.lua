@@ -1,5 +1,5 @@
 -- Kirby's Adventure Sprite info viewer
--- 
+-- for BizHawk
 
 -- option
 
