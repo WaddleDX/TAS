@@ -5,6 +5,9 @@ This script can do the following:
 - Highlight RNGs that meet the criteria
 - Manipulate RNGs
 
+**A database file containing the RNG tables is included with this script.
+Be sure to download ```RNG.db``` and place it in the same folder.**
+
 ## Video
 https://www.youtube.com/watch?v=AeL43qIkaG8
 
