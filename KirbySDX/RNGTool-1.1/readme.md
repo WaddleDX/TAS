@@ -31,6 +31,8 @@ This value does not exist in the game RAM. The pseudo-random number in the game 
 However, since this pseudo-random sequence returns to its initial value 65534 times, it is possible to put all of them together on the table.
 The ID will be the address in that table.
 
+SubID is your own RNG ID; by clicking Reset SubID, you can see the RNG number relative to that point in time.
+
 ### RNG Table
 Table of pseudo-random number sequences.
 The number of random numbers before and after can be adjusted by changing the values of prev-steps and next-steps.
