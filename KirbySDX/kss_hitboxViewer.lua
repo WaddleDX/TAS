@@ -2,6 +2,10 @@
 -- Kirby Super Star Hitbox Viewer --
 ------------------------------------
 -- Author: WaddleDX
+-- Version: 1.0
+--    Displays only attack hitboxes for Kirby and helpers.
+--    Enemy attacks and main body hitboxes are not yet implemented.
+-- 
 -- NOTICE:
 -- This script only works with the BSNESv115+ or Faust core in BizHawk.
 -- It will not function correctly with other SNES cores.
@@ -159,4 +163,5 @@ end
 while true do
 	displayHitbox()
 	emu.frameadvance()
+
 end
