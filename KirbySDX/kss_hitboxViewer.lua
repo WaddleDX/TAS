@@ -2,7 +2,7 @@
 -- Kirby Super Star Hitbox Viewer --
 ------------------------------------
 -- Author: WaddleDX
--- Version: 1.0
+-- Version: 1.1
 --    Displays only attack hitboxes for Kirby and helpers.
 --    Enemy attacks and main body hitboxes are not yet implemented.
 -- 
@@ -17,14 +17,24 @@ local CARTROM = "CARTROM"
 local SA1_RAM = "SA1 IRAM"
 
 -- CARTRAM address
-local ADDR_PROJ_XPOS = 0x098C
-local ADDR_PROJ_YPOS = 0x0A06
+local ADDR_PROJ_XPOS = 0x0898
+local ADDR_PROJ_YPOS = 0x0912
 local ADDR_PROJ_EXIST = 0x02C2
+local ADDR_ENEMY_TYPE = 0x0254
+local ADDR_ENEMY_XPOS = 0x08AA
+local ADDR_ENEMY_YPOS = 0x0924
+local ADDR_THROW_ID = 0x19C4
 
 -- CARTROM address
 local ADDR_PROJ_XSIZE = 0x0827FE
 local ADDR_PROJ_YSIZE = 0x082842
 local ADDR_PROJ_DMG = 0x082886
+local ADDR_PROJ_REACTION = 0x08290E
+local ADDR_THROW_XSIZE = 0x102AFD
+local ADDR_THROW_YSIZE = 0x102B51
+local ADDR_THROW_DMG = 0x102BA5
+local ADDR_THROW_REACTION = 0x102CA1
+
 
 -- IRAM address
 local ADDR_CAM_X = 0x0350
@@ -39,6 +49,14 @@ function getProjectileHitboxInfo(id)
     local x_size = memory.read_u8(ADDR_PROJ_XSIZE + (id))
     local y_size = memory.read_u8(ADDR_PROJ_YSIZE + (id))
     local dmg = memory.read_u8(ADDR_PROJ_DMG + (id))
+    return x_size, y_size, dmg
+end
+
+function getThrownObjectHitboxInfo(id)
+    memory.usememorydomain(CARTROM)
+    local x_size = memory.read_u8(ADDR_THROW_XSIZE + (id))
+    local y_size = memory.read_u8(ADDR_THROW_YSIZE + (id))
+    local dmg = memory.read_u8(ADDR_THROW_DMG + (id))
     return x_size, y_size, dmg
 end
 
@@ -88,7 +106,8 @@ function displayHitbox()
             y_pos,
             x_size,
             y_size,
-            dmg
+            dmg,
+            reaction
         }
         -- Read position and size from the cartridge RAM
         memory.usememorydomain(CARTRAM)
@@ -98,6 +117,25 @@ function displayHitbox()
         -- Get size and damage from the cartridge ROM
         hitbox_atk_proj[i].x_size, hitbox_atk_proj[i].y_size, hitbox_atk_proj[i].dmg = 
         getProjectileHitboxInfo(hitbox_atk_proj[i].id)
+    end
+
+    -- Read hitbox data for thrown objects
+    local hitbox_throw = {}
+    for i = 1, 16 do
+        memory.usememorydomain(CARTRAM)
+        hitbox_throw[i] = {
+            id = memory.read_s16_le(ADDR_THROW_ID + ((i-1) * 0x2)),
+            type = memory.read_s16_le(ADDR_ENEMY_TYPE + (i-1) * 0x2),
+            x_pos = memory.read_s16_le(ADDR_ENEMY_XPOS + ((i-1) * 0x2)),
+            y_pos = memory.read_s16_le(ADDR_ENEMY_YPOS + ((i-1) * 0x2)),
+            x_size,
+            y_size,
+            dmg,
+            reaction
+        }
+        -- Get size and damage from the cartridge ROM
+        hitbox_throw[i].x_size, hitbox_throw[i].y_size, hitbox_throw[i].dmg = 
+        getThrownObjectHitboxInfo(hitbox_throw[i].id)
     end
 
     -- clear the screen
@@ -123,7 +161,7 @@ function displayHitbox()
     end
     for i = 1, 4 do
         local hitbox = hitbox_atk_normal.helper[i]
-        if hitbox.id ~= -1 then
+        if hitbox.id > 0 then
             gui.drawRectangle(
                 hitbox.x_pos - cam_x - hitbox.x_size,
                 hitbox.y_pos - cam_y - hitbox.y_size,
@@ -142,7 +180,7 @@ function displayHitbox()
     -- Projectile Attack Hitboxes
     for i = 1, 8 do
         local hitbox = hitbox_atk_proj[i]
-        if hitbox.exist ~= -1 then
+        if hitbox.exist ~= -1 and hitbox.id ~= -1 then
             gui.drawRectangle(
                 hitbox.x_pos - cam_x - hitbox.x_size,
                 hitbox.y_pos - cam_y - hitbox.y_size,
@@ -157,11 +195,29 @@ function displayHitbox()
             )
         end
     end
+
+    -- Thrown Object Hitboxes
+    for i = 1, 16 do
+        local hitbox = hitbox_throw[i]
+        if hitbox.type == 9 and hitbox.id >= 0 then
+            gui.drawRectangle(
+                hitbox.x_pos - cam_x - hitbox.x_size,
+                hitbox.y_pos - cam_y - hitbox.y_size,
+                hitbox.x_size * 2,
+                hitbox.y_size * 2,
+                "#FF0000FF",
+                "#330000FF"
+            )
+            gui.pixelText(
+                hitbox.x_pos - cam_x, hitbox.y_pos - cam_y, 
+                string.format("dmg=%d", hitbox.dmg), "white", "#330000FF"
+            )
+        end
+    end
 end
 
 -- Main
 while true do
 	displayHitbox()
 	emu.frameadvance()
-
 end
